@@ -1,7 +1,8 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import MainLayout from "../layouts/MainLayout.astro";
+import ParentComponent from "../components/ParentComponent";
 ---
 
-<Layout>
-  <h1 class="text-3xl font-bold">Hello World</h1>
-</Layout>
+<MainLayout>
+  <ParentComponent client:load />
+</MainLayout>

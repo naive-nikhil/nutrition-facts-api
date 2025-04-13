@@ -1,0 +1,28 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Special+Gothic+Expanded+One&display=swap");
+@import "tailwindcss";
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  outline: none;
+  font-family: "DM Sans", sans-serif;
+  transition: all 0.3s ease-in-out;
+}
+
+.font-gothic {
+  font-family: "Special Gothic Expanded One", sans-serif !important;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}

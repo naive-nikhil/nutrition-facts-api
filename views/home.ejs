@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/output.css" />
+    <title>Nutrition Facts</title>
+  </head>
+  <body class="bg-[#E1EEBC]">
+    <header
+      class="fixed top-0 left-0 font-gothic text-center text-2xl w-full bg-[#328E6E] text-green-50 py-4 px-2 tracking-wide z-11"
+    >
+      Nutrition Facts API
+    </header>
+
+    <main class="max-w-[400px] mx-auto w-full px-4 my-22">
+      <div class="text-black/80 text-base font-bold">
+        <h2 class="flex items-center justify-center gap-2 m-4">
+          <span class="px-2 py-1 rounded-sm bg-[#328E6E]/15">MongoDB</span>
+          <span class="px-2 py-1 rounded-sm bg-[#328E6E]/15">Express.JS</span>
+          <span class="px-2 py-1 rounded-sm bg-[#328E6E]/15">Node.JS</span>
+        </h2>
+        <h2 class="text-center text-xl m-4">Search Nutrition Facts</h2>
+      </div>
+
+      <div class="relative">
+        <div
+          class="relative flex items-center bg-white rounded-full px-4 py-3 shadow-sm z-10"
+        >
+          <input
+            class="bg-white w-full font-semibold text-black/80"
+            type="text"
+            placeholder="Search food items..."
+            autocomplete="off"
+            id="searchInput"
+          />
+        </div>
+        <ul
+          id="suggestionsList"
+          class="absolute top-[50%] left-0 w-full bg-white shadow-sm max-h-[215px] overflow-y-scroll pt-6 rounded-b-2xl hidden capitalize z-9"
+        ></ul>
+      </div>
+
+      <div id="nutritionInfo" class="mt-6 hidden"></div>
+    </main>
+    <footer
+      class="fixed bottom-0 left-0 text-center w-full text-white font-semibold text-lg py-2 px-2 bg-[#328E6E]"
+    >
+      Project Copyright - Nikhil Patel
+      <div class="flex justify-center items-center gap-2 text-sm">
+        <a href="https://www.linkedin.com/in/nikhil-p-7483ab135/">Linkedin</a>
+        <a href="https://github.com/naive-nikhil">Github</a>
+      </div>
+    </footer>
+
+    <script>
+      const searchInput = document.getElementById("searchInput");
+      const suggestionsList = document.getElementById("suggestionsList");
+      const nutritionInfo = document.getElementById("nutritionInfo");
+
+      let debounceTimeout;
+
+      searchInput.addEventListener("input", () => {
+        nutritionInfo.innerHTML = "";
+        const query = searchInput.value.trim();
+        clearTimeout(debounceTimeout);
+
+        if (!query) {
+          suggestionsList.classList.add("hidden");
+          return;
+        }
+
+        debounceTimeout = setTimeout(() => {
+          fetch(`/api/foods/search?query=${encodeURIComponent(query)}`)
+            .then((res) => res.json())
+            .then((data) => {
+              suggestionsList.innerHTML = "";
+
+              if (data.length === 0) {
+                suggestionsList.classList.add("hidden");
+                return;
+              }
+
+              data.forEach((item) => {
+                const li = document.createElement("li");
+                li.textContent = item.food_name;
+                li.className =
+                  "px-4 py-3 hover:bg-gray-100 cursor-pointer font-semibold text-black/70";
+                li.addEventListener("click", () => {
+                  suggestionsList.classList.add("hidden");
+                  fetch(`/api/foods/${item._id}`)
+                    .then((res) => res.json())
+                    .then((food) => renderNutritionCards(food))
+                    .catch((err) =>
+                      console.error("Error fetching nutrition data:", err)
+                    );
+                });
+                suggestionsList.appendChild(li);
+              });
+
+              suggestionsList.classList.remove("hidden");
+            })
+            .catch((err) => console.error("Error fetching suggestions:", err));
+        }, 300);
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!suggestionsList.contains(e.target) && e.target !== searchInput) {
+          suggestionsList.classList.add("hidden");
+        }
+      });
+
+      const nutrientGroups = {
+        Energy: ["energy_kj", "energy_kcal"],
+        Macronutrients: [
+          "carb_g",
+          "protein_g",
+          "fat_g",
+          "freesugar_g",
+          "fibre_g",
+        ],
+        Minerals: [
+          "calcium_mg",
+          "phosphorus_mg",
+          "magnesium_mg",
+          "sodium_mg",
+          "potassium_mg",
+          "iron_mg",
+          "zinc_mg",
+          "copper_mg",
+          "selenium_ug",
+          "manganese_mg",
+          "chromium_mg",
+          "molybdenum_mg",
+        ],
+        Vitamins: [
+          "vita_ug",
+          "vite_mg",
+          "vitd2_ug",
+          "vitd3_ug",
+          "vitk1_ug",
+          "vitk2_ug",
+          "vitb1_mg",
+          "vitb2_mg",
+          "vitb3_mg",
+          "vitb5_mg",
+          "vitb6_mg",
+          "vitb7_ug",
+          "vitb9_ug",
+          "vitc_mg",
+          "folate_ug",
+          "carotenoids_ug",
+        ],
+        Fats: ["sfa_mg", "mufa_mg", "pufa_mg", "cholesterol_mg"],
+      };
+
+      function renderNutritionCards(food) {
+        nutritionInfo.innerHTML = `
+              <h2 class="text-2xl font-bold mb-4 text-center capitalize">${food.name}</h2>
+
+              <div class="mb-4 flex items-center justify-between gap-2">
+                <div class="flex items-center justify-between w-full">
+                  <div class="px-4 py-2 rounded bg-[#328E6E]/15 font-semibold focus:outline-none text-sm">
+                  <select id="portionDropdown" class="capitalize">
+                    <option value="base">Per 100g</option>
+                    <option value="serving">Per ${food.unit}</option>
+                    <option value="custom">Custom Amount (g)</option>
+                  </select>
+                  </div>
+                  <input
+                    id="customInput"
+                    type="number"
+                    placeholder="Gms"
+                    class="px-3 py-2 rounded bg-[#328E6E]/15 font-semibold focus:outline-none hidden text-sm"
+                  />
+                </div>
+              </div>
+
+              <div id="cardsContainer" class="space-y-4"></div>
+            `;
+
+        const dropdown = document.getElementById("portionDropdown");
+        const input = document.getElementById("customInput");
+        const cardsContainer = document.getElementById("cardsContainer");
+
+        dropdown.addEventListener("change", handleInputChange);
+        input.addEventListener("input", handleInputChange);
+
+        renderCards(food.base);
+
+        function handleInputChange() {
+          const value = dropdown.value;
+
+          if (value === "custom") {
+            input.classList.remove("hidden");
+            const grams = parseFloat(input.value);
+            if (!isNaN(grams) && grams > 0) {
+              const custom = {};
+              for (const key in food.base) {
+                custom[key] = ((food.base[key] || 0) * grams) / 100;
+              }
+              renderCards(custom);
+            }
+          } else {
+            input.classList.add("hidden");
+            renderCards(value === "base" ? food.base : food.serving);
+          }
+        }
+
+        function renderCards(data) {
+          cardsContainer.innerHTML = "";
+
+          for (const group in nutrientGroups) {
+            const groupDiv = document.createElement("div");
+            groupDiv.className = "bg-white p-4 rounded-xl shadow";
+
+            const groupTitle = document.createElement("h3");
+            groupTitle.className = "text-lg font-bold mb-2 text-[#328E6E]";
+            groupTitle.textContent = group;
+            groupDiv.appendChild(groupTitle);
+
+            nutrientGroups[group].forEach((key) => {
+              if (
+                data[key] !== undefined &&
+                data[key] !== null &&
+                data[key] !== 0
+              ) {
+                const nutrientDiv = document.createElement("div");
+                nutrientDiv.className =
+                  "flex justify-between border-b-1 border-b-black/10 py-1 text-sm font-medium text-black/80";
+                nutrientDiv.innerHTML = `
+                      <span>${formatKeyName(key)}</span>
+                      <span>${data[key].toFixed(2)}</span>
+                    `;
+                groupDiv.appendChild(nutrientDiv);
+              }
+            });
+
+            cardsContainer.appendChild(groupDiv);
+          }
+        }
+
+        function formatKeyName(key) {
+          const keyMap = {
+            energy_kj: "Energy kJ",
+            energy_kcal: "Energy kcal",
+            carb_g: "Carb g",
+            protein_g: "Protein g",
+            fat_g: "Fat g",
+            freesugar_g: "Freesugar g",
+            fibre_g: "Fibre g",
+            sfa_mg: "SFA mg",
+            mufa_mg: "MUFA mg",
+            pufa_mg: "PUFA mg",
+            cholesterol_mg: "Cholesterol mg",
+            calcium_mg: "Calcium mg",
+            phosphorus_mg: "Phosphorus mg",
+            magnesium_mg: "Magnesium mg",
+            sodium_mg: "Sodium mg",
+            potassium_mg: "Potassium mg",
+            iron_mg: "Iron mg",
+            copper_mg: "Copper mg",
+            selenium_ug: "Selenium µg",
+            chromium_mg: "Chromium mg",
+            manganese_mg: "Manganese mg",
+            molybdenum_mg: "Molybdenum mg",
+            zinc_mg: "Zinc mg",
+            vita_ug: "Vitamin A µg",
+            vite_mg: "Vitamin E mg",
+            vitd2_ug: "Vitamin D2 µg",
+            vitd3_ug: "Vitamin D3 µg",
+            vitk1_ug: "Vitamin K1 µg",
+            vitk2_ug: "Vitamin K2 µg",
+            folate_ug: "Folate µg",
+            vitb1_mg: "Vitamin B1 mg",
+            vitb2_mg: "Vitamin B2 mg",
+            vitb3_mg: "Vitamin B3 mg",
+            vitb5_mg: "Vitamin B5 mg",
+            vitb6_mg: "Vitamin B6 mg",
+            vitb7_ug: "Vitamin B7 µg",
+            vitb9_ug: "Vitamin B9 µg",
+            vitc_mg: "Vitamin C mg",
+            carotenoids_ug: "Carotenoids µg",
+          };
+
+          const cleanKey = key.toLowerCase();
+
+          return keyMap[cleanKey];
+        }
+
+        nutritionInfo.classList.remove("hidden");
+      }
+    </script>
+  </body>
+</html>

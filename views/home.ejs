@@ -159,8 +159,7 @@
         nutritionInfo.innerHTML = `
               <h2 class="text-2xl font-bold mb-4 text-center capitalize">${food.name}</h2>
 
-              <div class="mb-4 flex items-center justify-between gap-2">
-                <div class="flex items-center justify-between w-full">
+                <div class="flex items-center justify-between gap-2 mb-4">
                   <div class="px-4 py-2 rounded bg-[#328E6E]/15 font-semibold focus:outline-none text-sm">
                   <select id="portionDropdown" class="capitalize">
                     <option value="base">Per 100g</option>
@@ -172,10 +171,9 @@
                     id="customInput"
                     type="number"
                     placeholder="Gms"
-                    class="px-3 py-2 rounded bg-[#328E6E]/15 font-semibold focus:outline-none hidden text-sm"
+                    class="px-3 py-2 w-full rounded bg-[#328E6E]/15 font-semibold focus:outline-none hidden text-sm"
                   />
                 </div>
-              </div>
 
               <div id="cardsContainer" class="space-y-4"></div>
             `;
